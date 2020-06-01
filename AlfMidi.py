@@ -601,16 +601,16 @@ class AlfMidi( object ):
     # n( ‘..x  .’ )     - 16th-16th-1/4-rest1/2-sixteenth
     #
     # hits:
-    #   ,               - 1/32 note
-    #   .               - 1/16 note
-    #   e               - 1/8  note
-    #   x               - 1/4  note
-    # 	X               - 1/2  note 
-    #   W               - whole note 
+    #   ,               - 1/32 note  (maybe use 3)
+    #   .               - 1/16 note  (maybe use 6)
+    #   e               - 1/8  note  (maybe use 8)     
+    #   x               - 1/4  note  (maybe use 4)
+    # 	X               - 1/2  note  (maybe use 2)
+    #   W               - whole note (maybe use 1)
     # 
-    #   space           - rest for amount of last hit
+    # space             - rest for amount of last hit
     #
-    # embedded commands:
+    # embedded commands are in []:
     #   [v45]           - change default velocity-on to 45  
     #   [0.75]          - skip to time 0.75 within the bar.  0 .. 1 is allowed range.
     #
