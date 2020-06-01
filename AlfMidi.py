@@ -576,7 +576,8 @@ class AlfMidi( object ):
         self.time_sig = '4/4'   # time signature
         self.clocks_per_mtick = 24
         self.crotchets_per_32nd_note = 8
-        self.tracks = {}        # track names to MIDI instrument numbers
+        self.track = {}         # track names to MIDI instrument numbers
+        self.channel = {}       # track names to channel number
         self.BA = 0             # current bar
         self.TR = 1             # current track_number
         self.CH = 1             # current channel_number within track
@@ -595,9 +596,21 @@ class AlfMidi( object ):
 
     # track and channel meta data
     #
-    def track( name, midi_instrument ): 
+    # if channel == 0, then use the next unused channel that is not 10 (reserved for percussion)
+    #
+    def track( self, name, midi_instrument, channel=0 ): 
         if not midi_instrument in instruments: die( f'no MIDI instrument called {midi_instrument}; see names at top of this file' )
-        tracks[name] = instruments[midi_instrument]
+        self.track[name] = instruments[midi_instrument]
+        if channel == 0:
+            channel_in_use = [False for i in range(16+1)]
+            for name in self.channel:
+                channel_in_use[self.channel[name]] = True
+            for i in range( 1, 16+1 ):
+                if not channel_in_use[i]: 
+                    channel = i
+                    break
+            if channel == 0: die( 'out of free channels, please specify channel number manually' )
+        self.channel[name] = channel
 
     # shorthands for laying down notes:
     # 
@@ -619,7 +632,7 @@ class AlfMidi( object ):
     #   [v45]           - change default velocity-on to 45  
     #   [0.75]          - skip to time 0.75 within the bar.  0 .. 1 is allowed range.
     #
-    def n( s ):
+    def n( self, s ):
         # TODO
         pass
 
