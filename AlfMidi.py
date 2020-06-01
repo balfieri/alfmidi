@@ -485,6 +485,7 @@ class AlfMidi( object ):
     }
 
     # Conventional percussion notes on MIDI channel 10 only (GM2==level2).
+    # Some shorthands have been added.
     # 
     percussion_notes = {
         'High Q':                       27,     # GM2
@@ -496,22 +497,39 @@ class AlfMidi( object ):
         'Metronome Click':              33,     # GM2
         'Metronome Bell':               34,     # GM2
         'Acoustic Bass Drum':		35,
+        'ABD':                          35,
         'Bass Drum 1':		        36,
+        'BD1':                          36,
         'Side Stick':		        37,
+        'SS':                           37,
         'Acoustic Snare':		38,
+        'AS':                           38,
         'Hand Clap':		        39,
+        'HC':                           39,
         'Electric Snare':		40,
+        'ES':                           40,
         'Low Floor Tom':		41,
+        'LFT':                          41,
         'Closed Hi Hat':		42,
+        'CHH':                          42,
         'High Floor Tom':		43,
+        'HFT':                          43,
         'Pedal Hi-Hat':		        44,
+        'PHH':                          44,
         'Low Tom':		        45,
+        'LT':                           45,
         'Open Hi-Hat':		        46,
+        'OHH':                          46,
         'Low-Mid Tom':		        47,
+        'LMT':	                        47,
         'Hi-Mid Tom':		        48,
+        'HMT':                          48,
         'Crash Cymbal 1':		49,
+        'CC1':                          49,
         'High Tom':		        50,
+        'HT':                           51,
         'Ride Cymbal 1':		51,
+        'RC1':                          51,
         'Chinese Cymbal':		52,
         'Ride Bell':		        53,
         'Tambourine':		        54,
