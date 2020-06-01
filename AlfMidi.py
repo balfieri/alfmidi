@@ -615,10 +615,13 @@ class AlfMidi( object ):
     #   [0.75]          - skip to time 0.75 within the bar.  0 .. 1 is allowed range.
     #
     def n( s ):
+        # TODO
         pass
 
     # write buffer to <prefix>.mid file
     #
     def write( self, prefix ):
+        # TODO
         pass
-        
+    
+    # TODO: higher-level methods will be added after the above basics are done
