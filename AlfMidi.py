@@ -589,7 +589,7 @@ class AlfMidi( object ):
     #
     # time_sig                = '4/4' by default
     # clocks_per_quarter_note = 24    by default (clock pulses sent to MIDI devices, no need to change, probably)
-    # crotchets_per_32nd_note = 8     by default (no need to ever change, probably)
+    # crotchets_per_32nd_note = 8     by default (no need to change, probably)
     #
     def time( self, time_sig, clocks_per_quarter_note=24, crotchets_per_32nd_note=8 ):
         self.time_sig = time_sig
