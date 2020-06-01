@@ -639,9 +639,9 @@ class AlfMidi( object ):
         # TODO
         pass
 
-    # write buffer to <prefix>.mid file
+    # write buffer to <file> (e.g., mysong.mid)
     #
-    def write( self, prefix ):
+    def write( self, file ):
         # TODO
         pass
     
