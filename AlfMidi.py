@@ -310,7 +310,7 @@ class AlfMidi( object ):
         'Punch':			{ 'patch': 127, 'bank': 3 },
         'Heart Beat':			{ 'patch': 127, 'bank': 4 },
         'Footsteps':			{ 'patch': 127, 'bank': 5 },
-        'Gun Shot':			{ 'patch': 128, 'bank': 0 },
+        'Gunshot':			{ 'patch': 128, 'bank': 0 },
         'Machine Gun':			{ 'patch': 128, 'bank': 1 },
         'Lasergun':			{ 'patch': 128, 'bank': 2 },
         'Explosion':			{ 'patch': 128, 'bank': 2 },
