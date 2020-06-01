@@ -595,7 +595,27 @@ class AlfMidi( object ):
         if not midi_instrument in instruments: die( f'no MIDI instrument called {midi_instrument}' )
         tracks[name] = instruments[midi_instrument]
 
-    # TODO: lots more methods to lay down notes
+    # shorthands for laying down notes:
+    # 
+    # n( ‘[AS]xx x’ )   - switch to snare, then quarter-quarter-rest-quarter
+    # n( ‘..x  .’ )     - 16th-16th-1/4-rest1/2-sixteenth
+    #
+    # hits:
+    #   ,               - 1/32 note
+    #   .               - 1/16 note
+    #   e               - 1/8  note
+    #   x               - 1/4  note
+    # 	X               - 1/2  note 
+    #   W               - whole note 
+    # 
+    #   space           - rest for amount of last hit
+    #
+    # embedded commands:
+    #   [v45]           - change default velocity-on to 45  
+    #   [0.75]          - skip to time 0.75 within the bar.  0 .. 1 is allowed range.
+    #
+    def n( s ):
+        pass
 
     # write buffer to <prefix>.mid file
     #
