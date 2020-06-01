@@ -606,8 +606,9 @@ class AlfMidi( object ):
             for name in self.channel:
                 channel_in_use[self.channel[name]] = True
             for i in range( 1, 16+1 ):
-                if not channel_in_use[i]: 
-                    channel = i
+                if i != 10 and not channel_in_use[i]: 
+                    # found a free channel, use it
+                    channel = i         
                     break
             if channel == 0: die( 'out of free channels, please specify channel number manually' )
         self.channel[name] = channel
