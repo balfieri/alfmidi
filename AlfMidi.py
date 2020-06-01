@@ -584,7 +584,11 @@ class AlfMidi( object ):
 
     # change time signature, etc.
     #
-    def time( self, time_sig, clocks_per_mtick, crotchets_per_32nd_note ):
+    # time_sig                = '4/4' by default
+    # clocks_per_mtick        = 24    by default (though not sure what this means yet)
+    # crotchets_per_32nd_note = 8     by default (no need to ever change, probably)
+    #
+    def time( self, time_sig, clocks_per_mtick=24, crotchets_per_32nd_note=8 ):
         self.time_sig = time_sig
         self.clocks_per_mtick = clocks_per_mtick
         self.crotchets_per_32nd_note = crotchets_per_32nd_note
