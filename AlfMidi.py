@@ -578,6 +578,8 @@ class AlfMidi( object ):
         self.crotchets_per_32nd_note = 8
         self.track = {}         # track names to MIDI instrument numbers
         self.channel = {}       # track names to channel number
+        self.channel_in_use = [False for i in range(16+1)]
+        self.channel_in_use[10] = True  # reserved for percussion, by convention
         self.BA = 0             # current bar
         self.TR = 1             # current track_number
         self.CH = 1             # current channel_number within track
@@ -602,16 +604,14 @@ class AlfMidi( object ):
         if not midi_instrument in instruments: die( f'no MIDI instrument called {midi_instrument}; see names at top of this file' )
         self.track[name] = instruments[midi_instrument]
         if channel == 0:
-            channel_in_use = [False for i in range(16+1)]
-            for name in self.channel:
-                channel_in_use[self.channel[name]] = True
             for i in range( 1, 16+1 ):
-                if i != 10 and not channel_in_use[i]: 
+                if not channel_in_use[i]: 
                     # found a free channel, use it
                     channel = i         
                     break
             if channel == 0: die( 'out of free channels, please specify channel number manually' )
         self.channel[name] = channel
+        self.channel_in_use[channel] = True
 
     # shorthands for laying down notes:
     # 
