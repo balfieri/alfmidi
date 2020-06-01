@@ -598,6 +598,8 @@ class AlfMidi( object ):
 
     # track and channel meta data
     #
+    # name is caller-specified short name (e.g., bass)
+    # midi_instrument is one of the names listed in the instruments at the top of this file
     # if channel == 0, then use the next unused channel that is not 10 (reserved for percussion)
     #
     def track( self, name, midi_instrument, channel=0 ): 
