@@ -596,7 +596,7 @@ class AlfMidi( object ):
     # track and channel meta data
     #
     def track( name, midi_instrument ): 
-        if not midi_instrument in instruments: die( f'no MIDI instrument called {midi_instrument}' )
+        if not midi_instrument in instruments: die( f'no MIDI instrument called {midi_instrument}; see names at top of this file' )
         tracks[name] = instruments[midi_instrument]
 
     # shorthands for laying down notes:
