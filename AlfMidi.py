@@ -598,6 +598,7 @@ class AlfMidi( object ):
     # shorthands for laying down notes:
     # 
     # n( ‘[AS]xx x’ )   - switch to snare, then quarter-quarter-rest-quarter
+    # n( '[Db4]W' )     - switch to note Db4, then whole note
     # n( ‘..x  .’ )     - 16th-16th-1/4-rest1/2-sixteenth
     #
     # hits:
