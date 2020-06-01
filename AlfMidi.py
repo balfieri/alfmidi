@@ -634,6 +634,7 @@ class AlfMidi( object ):
     # embedded commands are in []:  (brackets provide readability, don't theortically need them)
     #   [v45]           - change default velocity-on to 45  
     #   [0.75]          - skip to time 0.75 within the bar.  0 .. 1 is allowed range.
+    #   [0.50 Db4 v45]  - skip to time 0.50, switch to note Db4, change velocity-on to 45
     #
     def n( self, s ):
         # TODO
