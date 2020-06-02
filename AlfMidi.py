@@ -660,7 +660,7 @@ class AlfMidi( object ):
     #   n( '([Db4].;;.) ([C5].;;.;)' )  # Db4 and C5 will start at the same time and time will continue after longest sequence
     #   
     # If you want to play multiple notes at once (i.e., a chord), you can enclose them in parens within the brackets.
-    # And you may have different velocities etc. for each note (not shown):
+    # And you may have different velocities etc. for each note or slight different time offsets for each (not shown):
     #
     #   [(A3) (D4) (F#4)].;;.]         # play all 3 notes (D major) at once using the same hits 
     #
