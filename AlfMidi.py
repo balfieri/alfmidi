@@ -586,8 +586,8 @@ class AlfMidi( object ):
     def __init__( self ):
         # per-instance variables
         #
-        self.time_sig = '4/4'   # time signature
-        self.clocks_per_mtick = 24
+        self.time_sig = [4, 4]  # 4/4 time signature
+        self.clocks_per_quarter_note = 24 # delta time ticks
         self.crotchets_per_32nd_note = 8
         self.track = {}         # track names to MIDI instrument numbers
         self.channel = {}       # track names to channel number
@@ -600,13 +600,13 @@ class AlfMidi( object ):
 
     # change time signature, etc.
     #
-    # time_sig                = '4/4' by default
-    # clocks_per_quarter_note = 24    by default (clock pulses sent to MIDI devices, no need to change, probably)
+    # time_sig                = [4,4] by default
+    # clocks_per_quarter_note = 24    by default (clock ticks per quarter note)
     # crotchets_per_32nd_note = 8     by default (no need to change, probably)
     #
     def time( self, time_sig, clocks_per_quarter_note=24, crotchets_per_32nd_note=8 ):
         self.time_sig = time_sig
-        self.clocks_per_mtick = clocks_per_mtick
+        self.clocks_per_quarter_note = clocks_per_quarter_note
         self.crotchets_per_32nd_note = crotchets_per_32nd_note
 
     # track and channel meta data
@@ -664,58 +664,79 @@ class AlfMidi( object ):
         # VVVVVVV = velocity 
         # XXXXXXX = instrument_number - 1
         #
-        # TODO: not clear how to specify bars and rests in here
-        #
         # HEADER_CHUNK:
         #      [4D 54 68 64] [00 00 00 06] [ff ff] [nn nn] [dd dd]
+        #                       ff ff == format (0, 1, 2)
         #                       nn nn == number of tracks in the file
-        #                       dd dd == number of delta-time ticks per quarter note
+        #                       dd dd == number of delta-time ticks per quarter note (typically 24)
         #
         # TRACK_CHUNK:
         #      [4D 54 72 6B] [xx xx xx xx]
         #                       xx xx xx xx == length of track in bytes
         #
-        # TIME_CODE:
-        #      1111 0001
-        #      0rr hhhhh                (rr = 24, 25, 29.97 or 30 frames/sec; hhhhh = 0-24)
-        #      00mmmmmmm                (0-59 minute)
-        #      00sssssss                (0-59 second)
-        #      000ffffff                (0-29 frame) 
+        # TIME_SIGNATURE:
+        #      delta_time
+        #      [ff 58 nn dd cc bb]
+        #                       nn == numerator   of time signature
+        #                       dd == denominator of time signature (power of 2)
+        #                       cc == clock ticks per 1/4 note
+        #                       bb == number of 1/32 notes in a 1/4 note
         #
+        # TEMPO:
+        #      delta_time
+        #      [ff 51 03 tttttt]
+        #                       tttttt == microseconds per 1/4 note
+        #      
         # CONTROL_CHANGE:               (general controller change, we use it only to select 'bank')
+        #      delta_time
         #      1011 CCCC
         #      controller               (0x20 == instrument bank LSByte, 0x00 == instrument bank MSByte)
         #      byte
         #
         # PATCH_CHANGE:                 (i.e., select instrument or 'patch', bank is changed in above)
-        #      1100 CCCC
+        #      delta_time
+        #      1100 CCCC                0xc
         #      0XXX XXXX
         #
+        # NOTE_ON: 
+        #      delta_time
+        #      1001 CCCC                0x9
+        #      0PPP PPPP
+        #      0VVV VVVV                (VVVVVVV == 0 is often used to mean NOTE_OFF)
+        #      [running status: append more 0PPP PPPP and 0VVV VVVV pairs]
+        #
         # NOTE_OFF:
-        #      1000 CCCC
+        #      delta_time
+        #      1000 CCCC                0x8
         #      0PPP PPPP
         #      0VVV VVVV                (VVVVVVV == 0 pretty much always)
         #
-        # NOTE_ON: 
-        #      1001 CCCC
-        #      0PPP PPPP
-        #      0VVV VVVV                (VVVVVVV == 0 is often used to mean NOTE_OFF)
-        #      [running status: can append more 0PPP PPPP and 0VVV VVVV pairs]
-        #
         # POLYPHONIC_AFTERTOUCH:        (amount of pressure at bottom of travel for single note)
-        #      1010 CCCC
+        #      delta_time
+        #      1010 CCCC                0xa
         #      0PPP PPPP
         #      0VVV VVVV                (pressure)
         #
         # CHANNEL_AFTERTOUCH:           (applied to all notes on channel)
-        #      1101 CCCC
+        #      delta_time
+        #      1101 CCCC                0xd
         #      0VVV VVVV                (pressure)
         #
-        # PITCH_WHEEL:                  (change pitch wheel pitch range)
-        #      1110 CCCC
-        #      0PPP PPPP                min pitch
-        #      0PPP PPPP                max pitch
+        # END_OF_TRACK:
+        #      delta_time
+        #      [ff 2f 00]
         #
-        pass
+
+        # convert buffer to array of bytes
+        #
+        bytes = []
+        # TODO
+
+        # write bytes[] to binary file
+        #
+        P( f'Writing {file}...' )
+        f = open( file, 'wb' )
+        f.write( bytearray(bytes) )
+        f.close()
     
     # TODO: higher-level methods will be added after the above basics are done
