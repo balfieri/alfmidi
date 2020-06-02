@@ -647,10 +647,20 @@ class AlfMidi( object ):
     # embedded commands are in []:  (brackets provide readability, don't theortically need them)
     #   [v45]           - change current velocity-on to 45  
     #   [vppp]          - change current velocity-on to ppp which is mapped to a number in the velocities dictionary
+    #   [p60]           - change pitch to 60 (C4)
     #   [+0.25]         - skip (i.e., rest) 1/4 of bar (usually quarter note) from end of last note
     #   [@5.50]         - go to absolute time: 1/2 way through bar 5
     #   [$+0.25]        - go to absolute time: 1/4 way through current bar
     #   [+0.25 Db4 v45] - skip 1/4 of bar, switch to note Db4, change velocity-on to 45
+    #
+    # Note: if you want to embed arbitrary Python expressions in Python strings 
+    # you can use a Python f-string, e.g.:
+    #   note = 'Db4'
+    #   vel  = 45
+    #   n( f'[+0.25 {note} v{vel}]' )   # effectively: n( '[+0.25 Db4 v45]' )
+    #
+    #   pitch = notes['Db4']            # 61
+    #   n( f'[p{pitch+12}]' )           # effectively: n( '[p73]' )
     #
     def n( self, s ):
         # TODO
