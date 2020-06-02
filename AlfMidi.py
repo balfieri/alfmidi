@@ -361,7 +361,7 @@ class AlfMidi( object ):
         'Bb2':                          BASE+26,
         'B2':                           BASE+27,
 
-        'C3':                           BASE+28,
+        'C3':                           BASE+28,                
         'C#3':                          BASE+29,
         'Db3':                          BASE+29,
         'D3':                           BASE+30,
@@ -379,7 +379,7 @@ class AlfMidi( object ):
         'Bb3':                          BASE+38,
         'B3':                           BASE+39,
 
-        'C4':                           BASE+40,
+        'C4':                           BASE+40,                # middle C
         'C#4':                          BASE+41,
         'Db4':                          BASE+41,
         'D4':                           BASE+42,
@@ -568,6 +568,19 @@ class AlfMidi( object ):
         'Open Surdo':                   87,     # GM2
         }
 
+    velocities = {
+        'pppp':                         8,
+        'ppp':                          20,
+        'pp':                           31,
+        'p':                            42,
+        'mp':                           53,
+        'mf':                           64,
+        'f':                            80,
+        'ff':                           96,
+        'fff':                          112,
+        'ffff':                         127,
+        }
+
     # constructor
     #
     def __init__( self ):
@@ -632,7 +645,8 @@ class AlfMidi( object ):
     # space             - rest for amount of last hit
     #
     # embedded commands are in []:  (brackets provide readability, don't theortically need them)
-    #   [v45]           - change default velocity-on to 45  
+    #   [v45]           - change current velocity-on to 45  
+    #   [vppp]          - change current velocity-on to ppp which is mapped to a number in the velocities dictionary
     #   [0.75]          - skip to time 0.75 within the bar.  0 .. 1 is allowed range.
     #   [0.50 Db4 v45]  - skip to time 0.50, switch to note Db4, change velocity-on to 45
     #
@@ -643,7 +657,65 @@ class AlfMidi( object ):
     # write buffer to <file> (e.g., mysong.mid)
     #
     def write( self, file ):
-        # TODO
+        # Summary of binary MIDI messages that we care about.
+        #
+        # CCCC    = channel - 1
+        # PPPPPPP = pitch - 1
+        # VVVVVVV = velocity 
+        # XXXXXXX = instrument_number - 1
+        #
+        # TODO: not clear how to specify bars and rests in here
+        #
+        # HEADER_CHUNK:
+        #      [4D 54 68 64] [00 00 00 06] [ff ff] [nn nn] [dd dd]
+        #                       nn nn == number of tracks in the file
+        #                       dd dd == number of delta-time ticks per quarter note
+        #
+        # TRACK_CHUNK:
+        #      [4D 54 72 6B] [xx xx xx xx]
+        #                       xx xx xx xx == length of track in bytes
+        #
+        # TIME_CODE:
+        #      1111 0001
+        #      0rr hhhhh                (rr = 24, 25, 29.97 or 30 frames/sec; hhhhh = 0-24)
+        #      00mmmmmmm                (0-59 minute)
+        #      00sssssss                (0-59 second)
+        #      000ffffff                (0-29 frame) 
+        #
+        # CONTROL_CHANGE:               (general controller change, we use it only to select 'bank')
+        #      1011 CCCC
+        #      controller               (0x20 == instrument bank LSByte, 0x00 == instrument bank MSByte)
+        #      byte
+        #
+        # PATCH_CHANGE:                 (i.e., select instrument or 'patch', bank is changed in above)
+        #      1100 CCCC
+        #      0XXX XXXX
+        #
+        # NOTE_OFF:
+        #      1000 CCCC
+        #      0PPP PPPP
+        #      0VVV VVVV                (VVVVVVV == 0 pretty much always)
+        #
+        # NOTE_ON: 
+        #      1001 CCCC
+        #      0PPP PPPP
+        #      0VVV VVVV                (VVVVVVV == 0 is often used to mean NOTE_OFF)
+        #      [running status: can append more 0PPP PPPP and 0VVV VVVV pairs]
+        #
+        # POLYPHONIC_AFTERTOUCH:        (amount of pressure at bottom of travel for single note)
+        #      1010 CCCC
+        #      0PPP PPPP
+        #      0VVV VVVV                (pressure)
+        #
+        # CHANNEL_AFTERTOUCH:           (applied to all notes on channel)
+        #      1101 CCCC
+        #      0VVV VVVV                (pressure)
+        #
+        # PITCH_WHEEL:                  (change pitch wheel pitch range)
+        #      1110 CCCC
+        #      0PPP PPPP                min pitch
+        #      0PPP PPPP                max pitch
+        #
         pass
     
     # TODO: higher-level methods will be added after the above basics are done
