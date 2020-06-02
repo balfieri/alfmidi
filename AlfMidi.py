@@ -654,18 +654,26 @@ class AlfMidi( object ):
     #   [+0.25 Db4 v45] - skip 1/4 of bar, switch to note Db4, change velocity-on to 45
     #
     # If you want a bunch of commands to start at the same time, enclose sequences in parentheses
-    # and separate parallel sequences with spaces.  And you may nest parentheses:
+    # and separate parallel sequences with spaces.  Note that you could also use the go to absolute time command 
+    # but this is easier.  And you may nest parentheses (not shown here):
     #
     #   n( '([Db4].;;.) ([C5].;;.;)' )  # Db4 and C5 will start at the same time and time will continue after longest sequence
     #   
-    # If you want to embed arbitrary Python expressions in Python strings 
-    # you can use a Python f-string, e.g.:
+    # If you want to play multiple notes at once (i.e., a chord), you can enclose them in parens within the brackets.
+    # And you may have different velocities etc. for each note (not shown):
+    #
+    #   [(A3) (D4) (F#4)].;;.]         # play all 3 notes (D major) at once using the same hits 
+    #
+    # If you want to embed arbitrary Python expressions in Python strings, use a Python f-string, e.g.:
     #   note = 'Db4'
     #   vel  = 45
     #   n( f'[+0.25 {note} v{vel}]' )   # effectively: n( '[+0.25 Db4 v45]' )
     #
     #   pitch = notes['Db4']            # 61
     #   n( f'[p{pitch+12}]' )           # effectively: n( '[p73]' )
+    #
+    #   Dmaj = '[(A3) (D4) (F#4)]'      # D-major chord
+    #   n( f'{Dmaj}.;;.' )
     #
     def n( self, s ):
         # TODO
