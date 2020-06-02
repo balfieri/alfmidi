@@ -648,9 +648,9 @@ class AlfMidi( object ):
     #   [v45]           - change current velocity-on to 45  
     #   [vppp]          - change current velocity-on to ppp which is mapped to a number in the velocities dictionary
     #   [p60]           - change pitch to 60 (C4)
-    #   [+0.25]         - skip (i.e., rest) 1/4 of bar (usually quarter note) from end of last note
+    #   [+0.25]         - rest for 1/4 of bar (usually quarter note) from end of last note
     #   [@5.50]         - go to absolute time: 1/2 way through bar 5
-    #   [$+0.25]        - go to absolute time: 1/4 way through current bar
+    #   [$+0.25]        - go to absolute time: 1/4 way through _current_ bar
     #   [+0.25 Db4 v45] - skip 1/4 of bar, switch to note Db4, change velocity-on to 45
     #
     # If you want a bunch of commands to start at the same time, enclose sequences in parentheses
@@ -660,9 +660,9 @@ class AlfMidi( object ):
     #   n( '([Db4].;;.) ([C5].;;.;)' )  # Db4 and C5 will start at the same time and time will continue after longest sequence
     #   
     # If you want to play multiple notes at once (i.e., a chord), you can enclose them in parens within the brackets.
-    # And you may have different velocities etc. for each note or slight different time offsets for each (not shown):
+    # And you may have different velocities etc. for each note or slightly different time offsets for each note (not shown):
     #
-    #   [(A3) (D4) (F#4)].;;.]         # play all 3 notes (D major) at once using the same hits 
+    #   [(A3) (D4) (F#4)].;;.          # play all 3 notes (D major) at once using the same hits 
     #
     # If you want to embed arbitrary Python expressions in Python strings, use a Python f-string, e.g.:
     #   note = 'Db4'
@@ -673,7 +673,7 @@ class AlfMidi( object ):
     #   n( f'[p{pitch+12}]' )           # effectively: n( '[p73]' )
     #
     #   Dmaj = '[(A3) (D4) (F#4)]'      # D-major chord
-    #   n( f'{Dmaj}.;;.' )
+    #   n( f'{Dmaj}.;;.' )              # effectively: n( '[(A3) (D4) (F#4)]' )
     #
     def n( self, s ):
         # TODO
