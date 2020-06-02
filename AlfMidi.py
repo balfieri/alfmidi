@@ -493,9 +493,13 @@ class AlfMidi( object ):
         'Scratch Push':                 29,     # GM2
         'Scratch Pull':                 30,     # GM2
         'Sticks':                       31,     # GM2
+        'ST':                           31,     # GM2
         'Square Click':                 32,     # GM2
+        'SC':                           32,     # GM2
         'Metronome Click':              33,     # GM2
+        'MC':                           33,     # GM2
         'Metronome Bell':               34,     # GM2
+        'MB':                           34,     # GM2
         'Acoustic Bass Drum':		35,
         'ABD':                          35,
         'Bass Drum 1':		        36,
@@ -527,19 +531,26 @@ class AlfMidi( object ):
         'Crash Cymbal 1':		49,
         'CC1':                          49,
         'High Tom':		        50,
-        'HT':                           51,
+        'HT':                           50,
         'Ride Cymbal 1':		51,
         'RC1':                          51,
         'Chinese Cymbal':		52,
         'Ride Bell':		        53,
         'Tambourine':		        54,
+        'TA':                           54,
         'Splash Cymbal':		55,
+        'SC':                           55,
         'Cowbell':		        56,
+        'CB':                           56,
         'Crash Cymbal 2':		57,
+        'CC2':                          47,
         'Vibraslap':		        58,
         'Ride Cymbal 2':		59,
+        'RC2':                          59,
         'Hi Bongo':		        60,
+        'HB':                           60,
         'Low Bongo':		        61,
+        'LB':                           61,
         'Mute Hi Conga':		62,
         'Open Hi Conga':		63,
         'Low Conga':		        64,
