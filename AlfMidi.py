@@ -653,7 +653,12 @@ class AlfMidi( object ):
     #   [$+0.25]        - go to absolute time: 1/4 way through current bar
     #   [+0.25 Db4 v45] - skip 1/4 of bar, switch to note Db4, change velocity-on to 45
     #
-    # Note: if you want to embed arbitrary Python expressions in Python strings 
+    # If you want a bunch of commands to start at the same time, enclose sequences in parentheses
+    # and separate parallel sequences with spaces.  And you may nest parentheses:
+    #
+    #   n( '([Db4].;;.) ([C5].;;.;)' )  # Db4 and C5 will start at the same time and time will continue after longest sequence
+    #   
+    # If you want to embed arbitrary Python expressions in Python strings 
     # you can use a Python f-string, e.g.:
     #   note = 'Db4'
     #   vel  = 45
