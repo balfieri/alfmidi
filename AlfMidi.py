@@ -647,8 +647,9 @@ class AlfMidi( object ):
     # embedded commands are in []:  (brackets provide readability, don't theortically need them)
     #   [v45]           - change current velocity-on to 45  
     #   [vppp]          - change current velocity-on to ppp which is mapped to a number in the velocities dictionary
-    #   [0.75]          - skip to time 0.75 within the bar.  0 .. 1 is allowed range.
-    #   [0.50 Db4 v45]  - skip to time 0.50, switch to note Db4, change velocity-on to 45
+    #   [+0.25]         - skip 1/4 of bar (usually quarter note) from end of last note
+    #   [@5.50]         - go to absolute time: bar 5, halfway through the bar
+    #   [+0.25 Db4 v45] - skip 1/4 of bar, switch to note Db4, change velocity-on to 45
     #
     def n( self, s ):
         # TODO
