@@ -673,7 +673,7 @@ class AlfMidi( object ):
     #   n( f'[p{pitch+12}]' )           # effectively: n( '[p73]' )
     #
     #   Dmaj = '[(A3) (D4) (F#4)]'      # D-major chord
-    #   n( f'{Dmaj}.;;.' )              # effectively: n( '[(A3) (D4) (F#4)]' )
+    #   n( f'{Dmaj}.;;.' )              # effectively: n( '[(A3) (D4) (F#4)].;;.' )
     #
     def n( self, s ):
         # TODO
