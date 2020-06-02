@@ -579,6 +579,8 @@ class AlfMidi( object ):
         'Open Surdo':                   87,     # GM2
         }
 
+    # common named velocities 
+    #
     velocities = {
         'pppp':                         8,
         'ppp':                          20,
