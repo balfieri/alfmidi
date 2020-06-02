@@ -687,7 +687,6 @@ class AlfMidi( object ):
         # CCCC    = channel - 1
         # PPPPPPP = pitch - 1
         # VVVVVVV = velocity 
-        # XXXXXXX = instrument_number - 1
         #
         # HEADER_CHUNK:
         #      [4D 54 68 64] [00 00 00 06] [ff ff] [nn nn] [dd dd]
@@ -721,7 +720,7 @@ class AlfMidi( object ):
         # PATCH_CHANGE:                 (i.e., select instrument or 'patch', bank is changed in above)
         #      delta_time
         #      1100 CCCC                0xc
-        #      0XXX XXXX
+        #      0III IIII                (instrument_number - 1)
         #
         # NOTE_ON: 
         #      delta_time
