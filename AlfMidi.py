@@ -659,11 +659,11 @@ class AlfMidi( object ):
     #
     # embedded commands are in []:  (brackets provide readability, don't theortically need them)
     #   [v45]           - change current velocity-on to 45  
-    #   [vppp]          - change current velocity-on to ppp which is mapped to a number in the velocities dictionary
+    #   [Vppp]          - change current velocity-on to ppp which is mapped to a number in the velocities dictionary
     #   [p60]           - change pitch to 60 (C4)
     #   [+0.25]         - rest for 1/4 of bar (usually quarter note) from end of last note
     #   [@5.50]         - go to absolute time: 1/2 way through bar 5
-    #   [$+0.25]        - go to absolute time: 1/4 way through _current_ bar
+    #   [$0.25]         - go to absolute time: 1/4 way through _current_ bar
     #   [+0.25 Db4 v45] - skip 1/4 of bar, switch to note Db4, change velocity-on to 45
     #
     # If you want a bunch of commands to start at the same time, separate sequences by spaces
@@ -694,9 +694,135 @@ class AlfMidi( object ):
     #   Dmaj = '[A3 D4 F#4]'            # D-major chord
     #   n( f'{Dmaj}.;;.' )              # effectively: n( '[A3 D4 F#4].;;.' )
     #
-    def n( self, s ):
+    def child_append( parent, child ):
+        child.sibling = None
+        if parent.child_first == None:
+            parent.child_first = child
+        else:
+            last = parent.child_first
+            while last.sibling != None:
+                last = last.sibling
+            last.sibling = child
+
+    def at_end( ctx ):
+        return ctx.si >= ctx.len
+
+    def skip_whitespace( ctx ):
+        while at_end( ctx ) and ctx.s[ctx.si] == ' ':
+            ctx.si += 1
+
+    def expect( ctx, ch ):
+        if at_end( ctx ) or ctx.s[ctx.si] != ch:
+            die( f'expected \'{ch}\' at position {ctx.si}: {s}' )
+        ctx.si += 1
+
+    def parse_name( ctx ):
         # TODO
-        pass
+        return 'bad'
+
+    def parse_real( ctx ):
+        # TODO
+        return 0.0
+
+    def parse_cmd( ctx, parent ):
+        skip_whitespace( ctx )
+        if at_end( ctx ): return False
+
+        ch = ctx.s[ctx.si]
+        kind = 'bad'
+        val  = None
+        if ch >= 'A' and ch <= 'G':
+            # named pitch
+            kind = 'named_pitch'
+            val  = parse_name( ctx )
+
+        elif ch == 'p':
+            # numeric pitch
+            ctx.si += 1
+            kind = 'numeric_pitch'
+            val  = parse_real( ctx )
+            pass
+
+        elif ch == 'V':
+            # named velocity 
+            ctx.si += 1
+            kind = 'named_velocity'
+            val  = parse_name( ctx )
+
+        elif ch == 'v':
+            # numeric velocity 
+            ctx.si += 1
+            kind = 'numeric_velocity'
+            val  = parse_real( ctx )
+
+        elif ch == '+' or ch == '-':
+            # skip forward or backward in this bar
+            kind = 'skip_in_bar'
+            val  = 1 if ch == '+' else -1
+            ctx.si += 1
+            val *= parse_real( ctx )
+
+        elif ch == '@':
+            # go to absolute time in song
+            ctx.si += 1
+            kind = 'goto_song_time'
+            val  = parse_real( ctx )
+
+        elif ch == '$':
+            # go to absolute time in current bar
+            ctx.si += 1
+            kind = 'goto_bar_time'
+            val  = parse_real( ctx )
+
+        else:
+            die( f'unexpected embedded command \'{ch}\' at index {ctx.si}: {ctx.s}' )
+
+        child.kind = kind
+        child.val  = kind
+        child_append( parent, child )
+
+    def parse_cmds( ctx, parent ):
+        expect( ctx, '[' )
+        cmds = { 'kind': 'cmds', 'parent': parent, 'child_first': None, 'sibling': None }
+        while parse_cmd( self, ctx, cmds ):
+            pass
+        expect( ctx, ']' )
+        child_append( parent, cmds )
+
+    def parse_hits( self, ctx ):
+        hits = ''
+        while not at_end( ctx ):
+            ch = ctx.s[ctx.si]
+            if ch == '.' or ch == ',' or ch == ':' or ch == ';' or ch == '|' or ch == '=' or ch == '_':
+                hits += ch
+            else:
+                die( 'bad hit or rest character \'{ch}\' at index {ctx.si}: {ctx.s}' )
+            ctx.si += 1
+        if hits == '': die( 'no hit or rest character at index {ctx.si}: {ctx.s}' )
+        child = { 'kind': 'hits', 'val': hits, 'parent': None, 'child_first': None, 'sibling': None }
+        child_append( parent, child )
+
+    def parse_sequence( self, ctx, parent ):
+        skip_whitespace( ctx )
+        if at_end( ctx ): return False
+
+        ch = ctx.s[ctx.si]
+        if ch == '[':
+            parse_cmds( self, ctx, parent )
+        else:
+            parse_hits( self, ctx, parent )
+        return True
+
+    def n( self, s ):
+        #---------------------------------------------------------------
+        # Parse string into tree form and insert that into the buffer.
+        # We'll worry about expanding it out later.
+        #---------------------------------------------------------------
+        ctx       = { 's': s, 'si': 0, 'len': s.length }
+        sequences = { 'kind': 'sequences', 'parent': None, 'child_first': None, 'sibling': None }
+        while self.parse_sequence( ctx, sequences ):
+            pass
+        self.buffer.append( sequences )
 
     # write buffer to <file> (e.g., mysong.mid)
     #
