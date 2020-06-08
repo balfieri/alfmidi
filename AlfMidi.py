@@ -643,9 +643,9 @@ class AlfMidi( object ):
 
     # shorthands for laying down notes:
     # 
-    # n( ‘[AS];; ;’ )   - switch to snare, then quarter-quarter-rest-quarter
+    # n( ‘[AS];;_;’ )   - switch to snare, then quarter-quarter-rest_quarter-quarter
     # n( '[Db4]=' )     - switch to note Db4, then whole note
-    # n( ‘,,;  ,’ )     - 16th-16th-quarter-halfrest-sixteenth
+    # n( ‘,,;__,’ )     - 16th-16th-quarter-rest_quarter-rest_quarter-sixteenth
     #
     # hits:
     #   .               - 1/32  note  
@@ -655,7 +655,7 @@ class AlfMidi( object ):
     # 	|               - 1/2   note  
     #   =               - whole note  
     # 
-    # space             - rest for amount of last hit
+    #   _               - rest for amount of last hit
     #
     # embedded commands are in []:  (brackets provide readability, don't theortically need them)
     #   [v45]           - change current velocity-on to 45  
@@ -666,18 +666,24 @@ class AlfMidi( object ):
     #   [$+0.25]        - go to absolute time: 1/4 way through _current_ bar
     #   [+0.25 Db4 v45] - skip 1/4 of bar, switch to note Db4, change velocity-on to 45
     #
-    # If you want a bunch of commands to start at the same time, enclose sequences in parentheses
+    # If you want a bunch of commands to start at the same time, separate sequences by spaces
     # and separate parallel sequences with spaces.  Note that you could also use the go to absolute time command 
-    # but this is easier.  And you may nest parentheses (not shown here):
+    # but this is easier.  And you may use parentheses to force groupings (not shown).
     #
-    #   n( '([Db4].;;.) ([C5].;;.;)' )  # Db4 and C5 will start at the same time and time will continue after longest sequence
+    #   n( '[Db4].;;. [C5].;;.;' )  # Db4 and C5 will start at the same time and time will continue after longest sequence
     #   
-    # If you want to play multiple notes at once (i.e., a chord), you can enclose them in parens within the brackets.
-    # And you may have different velocities etc. for each note or slightly different time offsets for each note (not shown):
+    # If you want to play multiple notes at once (i.e., a chord), you can separate them with spaces within the brackets.
     #
-    #   [(A3) (D4) (F#4)].;;.          # play all 3 notes (D major) at once using the same hits 
+    #   [A3 D4 F#4].;;.                 # play all 3 notes (D major) at once using the same hits 
     #
-    # If you want to embed arbitrary Python expressions in Python strings, use a Python f-string, e.g.:
+    # And you may have different velocities etc. for each note or slightly different time offsets for each note
+    # by grouping things together using parentheses:
+    #
+    #   [A3 (D4 vpp) (F#4 vp)].;;.      # same as previous, but D4 and F#4 have pp and p velocities
+    #
+    # If you want to embed arbitrary Python expressions in Python strings, use a Python f-string.
+    # F-string substitutions occur before n() is passed the resultant string:
+    #
     #   note = 'Db4'
     #   vel  = 45
     #   n( f'[+0.25 {note} v{vel}]' )   # effectively: n( '[+0.25 Db4 v45]' )
@@ -685,8 +691,8 @@ class AlfMidi( object ):
     #   pitch = notes['Db4']            # 61
     #   n( f'[p{pitch+12}]' )           # effectively: n( '[p73]' )
     #
-    #   Dmaj = '[(A3) (D4) (F#4)]'      # D-major chord
-    #   n( f'{Dmaj}.;;.' )              # effectively: n( '[(A3) (D4) (F#4)].;;.' )
+    #   Dmaj = '[A3 D4 F#4]'            # D-major chord
+    #   n( f'{Dmaj}.;;.' )              # effectively: n( '[A3 D4 F#4].;;.' )
     #
     def n( self, s ):
         # TODO
