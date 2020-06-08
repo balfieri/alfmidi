@@ -1,17 +1,16 @@
-# AlfMidi.py - python3 module for converting musical thoughts in the form of Python snippets into MIDI files
+# AlfMidi.py - fully-self-contained Python3 module for converting musical thoughts 
+#              in the form of Python3 snippets into MIDI files
 #
-# Supported MIDI Standards:
+# Currently Supported MIDI Standards:
 #    - MIDI 1.0
 #    - General MIDI Level 2
 #
 import os
 
-P = print
-
 # Abort with message.
 #
 def die( msg ):
-    P( f'ERROR: {msg}' )
+    print( f'ERROR: {msg}' )
     sys.exit( 1 )
 
 class AlfMidi( object ):
@@ -624,11 +623,16 @@ class AlfMidi( object ):
         self.crotchets_per_32nd_note = crotchets_per_32nd_note
 
     # track and channel meta data
-    # or change to previously defined track
+    # OR change current track to to previously defined track
     #
-    # name is caller-specified short name (e.g., bass)
-    # midi_instrument is one of the names listed in the instruments at the top of this file (or ommitted if specified previously)
-    # if channel == 0, then use the next unused channel that is not 10 (reserved for percussion)
+    # name is caller-specified short name (e.g., bass) for the track
+    #
+    # midi_instrument is one of the names listed in the instruments at the top of this file;
+    # if ommitted, means that we are just switching to the instrument which must have been
+    # previously specified.
+    #
+    # If channel == 0, then use the next unused MIDI channel that is not 10 (reserved for percussion),
+    # when midi_instrument is not ommitted.  For software-only MIDI work, channel is not important.
     #
     def track( self, name, midi_instrument='', channel=0 ): 
         if midi_instrument == '':
@@ -683,6 +687,8 @@ class AlfMidi( object ):
     #   n( '[Db4].;;. [C5].;;.;' )      # Db4 and C5 will start at the same time and time will continue after longest sequence
     #   
     # If you want to play multiple notes at once (i.e., a chord), you can separate them with spaces within the brackets.
+    # In general, multiple commands in the brackets apply at the same time, so multiple notes means play all
+    # of them for the next set of hits.
     #
     #   [A3 D4 F#4].;;.                 # play all 3 notes (D major) at once using the same hits 
     #
@@ -691,8 +697,9 @@ class AlfMidi( object ):
     #
     #   [A3 (D4 vpp) (F#4 vp)].;;.      # same as previous, but D4 and F#4 have pp and p velocities
     #
-    # If you want to embed arbitrary Python expressions in Python strings, use a Python f-string.
-    # F-string substitutions occur before n() is passed the resultant string:
+    # Purely Python thing: if you want to embed arbitrary Python expressions in Python strings, 
+    # use a Python f-string.  F-string substitutions occur before n() is passed the resultant string,
+    # so n() does not participate in these substituations at all.
     #
     #   note = 'Db4'
     #   vel  = 45
@@ -866,6 +873,8 @@ class AlfMidi( object ):
         #---------------------------------------------------------------
         # Parse string into tree form and insert that into the buffer.
         # We'll worry about expanding it out later.
+        # Keeping it unexpanded allows more opportunities for editing
+        # the original intention as a whole.
         #---------------------------------------------------------------
         if self.curr_track == '': die( f'cannot play notes without a current track defined' )
         ctx       = { 's': s, 'si': 0, 'len': s.length }
@@ -875,9 +884,11 @@ class AlfMidi( object ):
         self.buffer.append( sequences )
 
     # write buffer to <file> (e.g., mysong.mid)
+    # (after implicitly expanding music in the buffer)
     #
     def write( self, file ):
-        # Summary of binary MIDI messages that we care about.
+        # Summary of binary MIDI messages that we might write out
+        # (caller does not need to know these details):
         #
         # CCCC    = channel - 1
         # PPPPPPP = pitch - 1
@@ -946,14 +957,17 @@ class AlfMidi( object ):
         #      [ff 2f 00]
         #
 
-        # convert buffer to array of bytes
+        # expand music in buffer
+        # TODO
+
+        # expand buffer to array of bytes
         #
         bytes = []
         # TODO
 
-        # write bytes[] to binary file
+        # write bytes[] to binary file (trivial)
         #
-        P( f'Writing {file}...' )
+        print( f'Writing {file}...' )
         f = open( file, 'wb' )
         f.write( bytearray(bytes) )
         f.close()
