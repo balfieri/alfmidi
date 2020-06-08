@@ -603,6 +603,7 @@ class AlfMidi( object ):
         self.clocks_per_quarter_note = 24 # delta time ticks
         self.crotchets_per_32nd_note = 8
         self.track = {}         # track names to MIDI instrument numbers
+        self_curr_track = ''    # current track name
         self.channel = {}       # track names to channel number
         self.channel_in_use = [False for i in range(16+1)]
         self.channel_in_use[10] = True  # reserved for percussion, by convention
@@ -623,13 +624,20 @@ class AlfMidi( object ):
         self.crotchets_per_32nd_note = crotchets_per_32nd_note
 
     # track and channel meta data
+    # or change to previously defined track
     #
     # name is caller-specified short name (e.g., bass)
-    # midi_instrument is one of the names listed in the instruments at the top of this file
+    # midi_instrument is one of the names listed in the instruments at the top of this file (or ommitted if specified previously)
     # if channel == 0, then use the next unused channel that is not 10 (reserved for percussion)
     #
-    def track( self, name, midi_instrument, channel=0 ): 
-        if not midi_instrument in instruments: die( f'no MIDI instrument called {midi_instrument}; see names at top of this file' )
+    def track( self, name, midi_instrument='', channel=0 ): 
+        if midi_instrument == '':
+            if not name in self.track: die( f'track \'{name}\' not yet associated with a midi_instrument' )
+        else:
+            if name in self.track: die( f'track \'{name}\' is already in use; cannot redefine the same name for now' )
+            if not midi_instrument in instruments: 
+                die( f'no MIDI instrument called {midi_instrument}; see names at top of this file' )
+
         self.track[name] = instruments[midi_instrument]
         if channel == 0:
             for i in range( 1, 16+1 ):
@@ -640,6 +648,7 @@ class AlfMidi( object ):
             if channel == 0: die( 'out of free channels, please specify channel number manually' )
         self.channel[name] = channel
         self.channel_in_use[channel] = True
+        self.curr_track = name
 
     # shorthands for laying down notes:
     # 
@@ -717,12 +726,53 @@ class AlfMidi( object ):
         ctx.si += 1
 
     def parse_name( ctx ):
-        # TODO
-        return 'bad'
+        # name must start with a letter and may contain letters, numbers, or '#'
+        name = ''
+        while not at_end( ctx ):
+            ch = ctx.s[ctx.si]
+            if (ch >= 'a' and ch <= 'z') or (ch >= 'A' and ch <= 'Z'):
+                name += ch
+            elif (ch >= '0' and ch <= '9') or ch == '#':
+                if name == '': die( f'name must start with a letter at index {ctx.si}: {ctx.s}' )
+                name += ch
+            else:
+                break
+            ctx.si += 1
+
+        if name == '': die( f'could not parse name at index {ctx.si}: {ctx.s}' )
+        return name
 
     def parse_real( ctx ):
-        # TODO
-        return 0.0
+        # parse real number literal (exponents not allowed)
+        r_s = ''
+        have_sign = False
+        in_frac   = False
+        got_digit = False
+        while not at_end( ctx ):
+            ch = ctx.s[ctx.si]
+            if ch == '+':
+                if have_sign: break
+                have_sign = True
+            
+            elif ch == '-':
+                if have_sign: break
+                have_sign = True
+                r_s += ch
+           
+            elif ch == '.':
+                if in_frac: break
+                in_frac = True
+                r_s += ch
+
+            elif ch >= '0' and ch <= '9':
+                got_digit = True
+                r_s += ch
+               
+            else:
+                break
+
+        if not got_digit: die( f'could not parse real at index {ctx.si}: {ctx.s}' )
+        return float( r_s )
 
     def parse_cmd( ctx, parent ):
         skip_whitespace( ctx )
@@ -758,9 +808,7 @@ class AlfMidi( object ):
         elif ch == '+' or ch == '-':
             # skip forward or backward in this bar
             kind = 'skip_in_bar'
-            val  = 1 if ch == '+' else -1
-            ctx.si += 1
-            val *= parse_real( ctx )
+            val  = parse_real( ctx )
 
         elif ch == '@':
             # go to absolute time in song
@@ -818,8 +866,9 @@ class AlfMidi( object ):
         # Parse string into tree form and insert that into the buffer.
         # We'll worry about expanding it out later.
         #---------------------------------------------------------------
+        if self.curr_track == '': die( f'cannot play notes without a current track defined' )
         ctx       = { 's': s, 'si': 0, 'len': s.length }
-        sequences = { 'kind': 'sequences', 'parent': None, 'child_first': None, 'sibling': None }
+        sequences = { 'kind': 'sequences', 'track': self.curr_track, 'parent': None, 'child_first': None, 'sibling': None }
         while self.parse_sequence( ctx, sequences ):
             pass
         self.buffer.append( sequences )
