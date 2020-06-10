@@ -8,7 +8,7 @@ What follows are some self-contained examples.  You can cut and paste each of th
 into a file then run python3 on that file.  Then import the .mid file into your DAW for playback.
 I also show what you would see in Logic Pro X for the midi notes.
 
-#### Trivial - a few bass notes
+### Trivial - a few bass notes
 
 <pre>
 from AlfMidi import AlfMidi
