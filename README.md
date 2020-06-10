@@ -2,9 +2,6 @@ AlfMidi is a self-contained Python module that can translate code snippets into 
 
 See comments in AlfMidi.py for available methods.  There are low-level methods and higher-level methods.
 
-We're just getting started.  Lots of crazy ideas will be implemented, including brain-to-computer
-interface.  
-
 ## Examples
 
 What follows are some self-contained examples.  You can cut and paste each of these
