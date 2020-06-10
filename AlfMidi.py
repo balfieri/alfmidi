@@ -726,43 +726,43 @@ class AlfMidi( object ):
                 last = last['sibling']
             last['sibling'] = child
 
-    def at_end( self, ctx ):
-        return ctx['si'] >= ctx['len']
+    def at_end( self ):
+        return self.si >= len( self.s )
 
-    def skip_whitespace( self, ctx ):
-        while not self.at_end( ctx ) and ctx['s'][ctx['si']] == ' ':
-            ctx['si'] += 1
+    def skip_whitespace( self ):
+        while not self.at_end() and self.s[self.si] == ' ':
+            self.si += 1
 
-    def expect( self, ctx, ch ):
-        if self.at_end( ctx ) or ctx['s'][ctx['si']] != ch:
-            die( f'expected \'{ch}\' at position {ctx.si}: {s}' )
-        ctx['si'] += 1
+    def expect( self, ch ):
+        if self.at_end() or self.s[self.si] != ch:
+            die( f'expected \'{ch}\' at position {self.si}: {s}' )
+        self.si += 1
 
-    def parse_name( self, ctx ):
+    def parse_name( self ):
         # name must start with a letter and may contain letters, numbers, or '#'
         name = ''
-        while not self.at_end( ctx ):
-            ch = ctx['s'][ctx['si']]
+        while not self.at_end():
+            ch = self.s[self.si]
             if (ch >= 'a' and ch <= 'z') or (ch >= 'A' and ch <= 'Z'):
                 name += ch
             elif (ch >= '0' and ch <= '9') or ch == '#':
-                if name == '': die( f'name must start with a letter at index {ctx.si}: {ctx.s}' )
+                if name == '': die( f'name must start with a letter at index {self.si}: {self.s}' )
                 name += ch
             else:
                 break
-            ctx['si'] += 1
+            self.si += 1
 
-        if name == '': die( f'could not parse name at index {ctx.si}: {ctx.s}' )
+        if name == '': die( f'could not parse name at index {self.si}: {self.s}' )
         return name
 
-    def parse_real( self, ctx ):
+    def parse_real( self ):
         # parse real number literal (exponents not allowed)
         r_s = ''
         have_sign = False
         in_frac   = False
         got_digit = False
-        while not self.at_end( ctx ):
-            ch = ctx['s'][ctx['si']]
+        while not self.at_end():
+            ch = self.s[self.si]
             if ch == '+':
                 if have_sign: break
                 have_sign = True
@@ -784,93 +784,93 @@ class AlfMidi( object ):
             else:
                 break
 
-        if not got_digit: die( f'could not parse real at index {ctx.si}: {ctx.s}' )
+        if not got_digit: die( f'could not parse real at index {self.si}: {self.s}' )
         return float( r_s )
 
-    def parse_cmd( self, ctx, parent ):
-        self.skip_whitespace( ctx )
-        if self.at_end( ctx ): return False
+    def parse_cmd( self, parent ):
+        self.skip_whitespace()
+        if self.at_end(): return False
 
-        ch = ctx['s'][ctx['si']]
+        ch = self.s[self.si]
         kind = 'bad'
         val  = None
         if ch >= 'A' and ch <= 'G':
             # named pitch
             kind = 'named_pitch'
-            val  = self.parse_name( ctx )
+            val  = self.parse_name()
 
         elif ch == 'p':
             # numeric pitch
-            ctx.si += 1
+            self.si += 1
             kind = 'numeric_pitch'
-            val  = self.parse_real( ctx )
+            val  = self.parse_real()
             pass
 
         elif ch == 'V':
             # named velocity 
-            ctx.si += 1
+            self.si += 1
             kind = 'named_velocity'
-            val  = self.parse_name( ctx )
+            val  = self.parse_name()
 
         elif ch == 'v':
             # numeric velocity 
-            ctx.si += 1
+            self.si += 1
             kind = 'numeric_velocity'
-            val  = self.parse_real( ctx )
+            val  = self.parse_real()
 
         elif ch == '+' or ch == '-':
             # skip forward or backward in this bar
             kind = 'skip_in_bar'
-            val  = self.parse_real( ctx )
+            val  = self.parse_real()
 
         elif ch == '@':
             # go to absolute time in song
-            ctx.si += 1
+            self.si += 1
             kind = 'goto_song_time'
-            val  = self.parse_real( ctx )
+            val  = self.parse_real()
 
         elif ch == '$':
             # go to absolute time in current bar
-            ctx.si += 1
+            self.si += 1
             kind = 'goto_bar_time'
-            val  = self.parse_real( ctx )
+            val  = self.parse_real()
 
         else:
-            die( f'unexpected embedded command \'{ch}\' at index {ctx.si}: {ctx.s}' )
+            die( f'unexpected embedded command \'{ch}\' at index {self.si}: {self.s}' )
 
         child = { 'kind': kind, 'val': val, 'parent': None, 'child_first': None, 'sibling': None }
         self.child_append( parent, child )
 
-    def parse_cmds( self, ctx, parent ):
-        self.expect( ctx, '[' )
+    def parse_cmds( self, parent ):
+        self.expect( '[' )
         cmds = { 'kind': 'cmds', 'parent': parent, 'child_first': None, 'sibling': None }
-        while self.parse_cmd( ctx, cmds ):
+        while self.parse_cmd( cmds ):
             pass
-        self.expect( ctx, ']' )
+        self.expect( ']' )
         self.child_append( parent, cmds )
 
-    def parse_hits( self, ctx, parent ):
+    def parse_hits( self, parent ):
         hits = ''
-        while not self.at_end( ctx ):
-            ch = ctx['s'][ctx['si']]
+        while not self.at_end():
+            ch = self.s[self.si]
             if ch == '.' or ch == ',' or ch == ':' or ch == ';' or ch == '|' or ch == '=' or ch == '_':
                 hits += ch
             else:
-                die( 'bad hit or rest character \'{ch}\' at index {ctx.si}: {ctx.s}' )
-            ctx['si'] += 1
-        if hits == '': die( 'no hit or rest character at index {ctx.si}: {ctx.s}' )
+                die( 'bad hit or rest character \'{ch}\' at index {self.si}: {self.s}' )
+            self.si += 1
+        if hits == '': die( 'no hit or rest character at index {self.si}: {self.s}' )
         child = { 'kind': 'hits', 'val': hits, 'parent': None, 'child_first': None, 'sibling': None }
         self.child_append( parent, child )
 
-    def parse_sequence( self, ctx, parent ):
-        self.skip_whitespace( ctx )
-        if self.at_end( ctx ): return False
+    def parse_sequence( self, parent ):
+        self.skip_whitespace()
+        if self.at_end(): return False
 
-        ch = ctx['s'][ctx['si']]
+        ch = self.s[self.si]
         if ch == '[':
-            self.parse_cmds( ctx, parent )
+            self.parse_cmds( parent )
         else:
-            self.parse_hits( ctx, parent )
+            self.parse_hits( parent )
         return True
 
     def n( self, s ):
@@ -881,11 +881,14 @@ class AlfMidi( object ):
         # the original intention as a whole.
         #---------------------------------------------------------------
         if self.curr_track == '': die( f'cannot play notes without a current track defined' )
-        ctx       = { 's': s, 'si': 0, 'len': len( s ) }
+        self.s = s
+        self.si = 0
         sequences = { 'kind': 'sequences', 'track': self.curr_track, 'parent': None, 'child_first': None, 'sibling': None }
-        while self.parse_sequence( ctx, sequences ):
+        while self.parse_sequence( sequences ):
             pass
         self.buffer.append( sequences )
+        self.s = None
+        self.si = 0
 
     # write buffer to <file> (e.g., mysong.mid)
     # (after implicitly expanding music in the buffer)
