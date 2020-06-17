@@ -20,6 +20,5 @@ m.n( '[C2];::;;' )
 m.write( 'bass1.mid' )
 </pre>
 
-
-Bob Alfieri
+Bob Alfieri<br>
 Chapel Hill, NC
