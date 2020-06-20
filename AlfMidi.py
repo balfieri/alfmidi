@@ -893,24 +893,61 @@ class AlfMidi( object ):
     # write buffer to <file> (e.g., mysong.mid)
     # (after implicitly expanding music in the buffer)
     #
-    def write( self, file ):
-        # Summary of binary MIDI messages that we might write out
-        # (caller does not need to know these details):
-        #
-        # CCCC    = channel - 1
-        # PPPPPPP = pitch - 1
-        # VVVVVVV = velocity 
-        #
+    def write_append( self, bytes, new_bytes ):
+        for b in new_bytes:
+            if b < 0x00 or b >= 0x100: die( 'bad byte during write_append' )
+            bytes.append( b )
+            
+    def write_append_uint16( self, bytes, uint16 ):
+        b0 = (uint16 >> 0) & 0xff
+        b1 = (uint16 >> 8) & 0xff
+        self.write_append( bytes, [b0, b1] )
+
+    def write_append_uint24( self, bytes, uint24 ):
+        b0 = (uint24 >>  0) & 0xff
+        b1 = (uint24 >>  8) & 0xff
+        b2 = (uint24 >> 16) & 0xff
+        self.write_append( bytes, [b0, b1, b2] )
+
+    def write_append_uint32( self, bytes, uint32 ):
+        b0 = (uint32 >>  0) & 0xff
+        b1 = (uint32 >>  8) & 0xff
+        b2 = (uint32 >> 16) & 0xff
+        b3 = (uint32 >> 24) & 0xff
+        self.write_append( bytes, [b0, b1, b2, b3] )
+
+    def write_header_chunk( self, bytes, format, track_cnt, delta_time_ticks_per_quarter_note ):
         # HEADER_CHUNK:
         #      [4D 54 68 64] [00 00 00 06] [ff ff] [nn nn] [dd dd]
         #                       ff ff == format (0, 1, 2)
         #                       nn nn == number of tracks in the file
         #                       dd dd == number of delta-time ticks per quarter note (typically 24)
         #
+        self.write_append( bytes, [0x4d, 0x54, 0x68, 0x64,  0x00, 0x00, 0x00, 0x6] )
+        self.write_append_uint16( bytes, format )
+        self.write_append_uint16( bytes, track_cnt )
+        self.write_append_uint16( bytes, delta_time_ticks_per_quarter_note )
+
+    def write_track_chunk( self, bytes, byte_cnt ):
         # TRACK_CHUNK:
         #      [4D 54 72 6B] [xx xx xx xx]
         #                       xx xx xx xx == length of track in bytes
         #
+        self.write_append( bytes, [0x4d, 0x54, 0x72, 0x6b] )
+        self.write_append_uint32( bytes, byte_cnt )
+
+    def write_delta_time( self, bytes, delta_time ):
+        self.write_append_uint32( bytes, delta_time )
+
+    def log2( n ):
+        n = 2*n - 1
+        r = 0
+        while n > 1:
+            r += 1
+            n >>= 1
+        return r
+
+    def write_time_signature( self, bytes, delta_time, numer, denom, clock_ticks_per_quarter, thirty_seconds_per_quarter ):
         # TIME_SIGNATURE:
         #      delta_time
         #      [ff 58 nn dd cc bb]
@@ -919,22 +956,42 @@ class AlfMidi( object ):
         #                       cc == clock ticks per 1/4 note
         #                       bb == number of 1/32 notes in a 1/4 note
         #
+        self.write_delta_time( bytes, delta_time )
+        self.write_append( bytes, [0xff, 0x58, numer, log2( denom ), clock_ticks_per_quarter, thirty_seconds_per_quarter] )
+
+    def write_tempo( self, bytes, delta_time, usec_per_quarter ):
         # TEMPO:
         #      delta_time
         #      [ff 51 03 tttttt]
         #                       tttttt == microseconds per 1/4 note
         #      
+        self.write_delta_time( bytes, delta_time )
+        self.write_append( bytes, [0xff, 0x51, 0x03] )
+        self.write_uint24( bytes, usec_per_quarty )
+        
+    def write_control_change( self, bytes, delta_time, channel, controller, byte ):
         # CONTROL_CHANGE:               (general controller change, we use it only to select 'bank')
         #      delta_time
         #      1011 CCCC
         #      controller               (0x20 == instrument bank LSByte, 0x00 == instrument bank MSByte)
         #      byte
         #
+        self.write_delta_time( bytes, delta_time )
+        cmd = (0xb << 4) | (channel - 1)
+        self.write_append( self, bytes, [cmd, controller, byte] )
+
+    def write_patch_change( self, bytes, delta_time, channel, instrument_number ):
         # PATCH_CHANGE:                 (i.e., select instrument or 'patch', bank is changed in above)
         #      delta_time
         #      1100 CCCC                0xc
         #      0III IIII                (instrument_number - 1)
         #
+        self.write_delta_time( bytes, delta_time )
+        cmd = (0xc << 4) | (channel - 1)
+        iiiiiii = (instrument_number - 1) & 0x7f
+        self.write_append( self, bytes, [cmd, iiiiiii] )
+        
+    def write_note_on( self, bytes, delta_time, channel, pitch, velocity ):
         # NOTE_ON: 
         #      delta_time
         #      1001 CCCC                0x9
@@ -942,31 +999,67 @@ class AlfMidi( object ):
         #      0VVV VVVV                (VVVVVVV == 0 is often used to mean NOTE_OFF)
         #      [running status: append more 0PPP PPPP and 0VVV VVVV pairs]
         #
+        self.write_delta_time( bytes, delta_time )
+        cmd = (0x9 << 4) | (channel - 1)
+        ppppppp = (pitch - 1) & 0x7f
+        vvvvvvv = velocity & 0x7f
+        self.write_append( self, bytes, [cmd, ppppppp, vvvvvvv] )
+        
+    def write_running_status( self, bytes, pitch, velocity ):
+        # RUNNING_STATUS:
+        #      0PPP PPPP
+        #      0VVV VVVV                (VVVVVVV == 0 is often used to mean NOTE_OFF)
+        #
+        ppppppp = (pitch - 1) & 0x7f
+        vvvvvvv = velocity & 0x7f
+        self.write_append( self, bytes, [ppppppp, vvvvvvv] )
+        
+    def write_note_off( self, bytes, delta_time, channel, pitch, velocity=0 ):
         # NOTE_OFF:
         #      delta_time
         #      1000 CCCC                0x8
         #      0PPP PPPP
         #      0VVV VVVV                (VVVVVVV == 0 pretty much always)
         #
+        self.write_delta_time( bytes, delta_time )
+        cmd = (0x8 << 4) | (channel - 1)
+        ppppppp = (pitch - 1) & 0x7f
+        vvvvvvv = velocity & 0x7f
+        self.write_append( self, bytes, [cmd, ppppppp, vvvvvvv] )
+        
+    def write_polyphonic_aftertouch( self, bytes, delta_time, channel, pitch, pressure ):
         # POLYPHONIC_AFTERTOUCH:        (amount of pressure at bottom of travel for single note)
         #      delta_time
         #      1010 CCCC                0xa
         #      0PPP PPPP
         #      0VVV VVVV                (pressure)
         #
+        self.write_delta_time( bytes, delta_time )
+        cmd = (0xa << 4) | (channel - 1)
+        ppppppp = (pitch - 1) & 0x7f
+        vvvvvvv = pressure & 0x7f
+        self.write_append( self, bytes, [cmd, ppppppp, vvvvvvv] )
+        
+    def write_channel_aftertouch( self, bytes, delta_time, channel, pressure ):
         # CHANNEL_AFTERTOUCH:           (applied to all notes on channel)
         #      delta_time
         #      1101 CCCC                0xd
         #      0VVV VVVV                (pressure)
         #
+        self.write_delta_time( bytes, delta_time )
+        cmd = (0xd << 4) | (channel - 1)
+        vvvvvvv = pressure & 0x7f
+        self.write_append( self, bytes, [cmd, vvvvvvv] )
+        
+    def write_end_of_track( self, bytes, delta_time ):
         # END_OF_TRACK:
         #      delta_time
         #      [ff 2f 00]
         #
+        self.write_delta_time( bytes, delta_time )
+        self.write_append( bytes, [0xff, 0x2f, 0x00] )
 
-        # expand music in buffer
-        # TODO
-
+    def write( self, file ):
         # expand buffer to array of bytes
         #
         bytes = []
